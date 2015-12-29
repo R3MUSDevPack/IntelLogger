@@ -1,0 +1,12 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="R3MUS.Devpack.IntelLogger.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="IntelChannel" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">GOTG_Intel</Value>
+    </Setting>
+    <Setting Name="IntelHubURL" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">http://localhost:22489/signalr</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
