@@ -24,7 +24,8 @@ namespace R3MUS.Devpack.IntelLogger
         {
             //Console.WriteLine(1.ToString());
             //Console.ReadLine();
-            try {
+            try
+            {
                 while (user == string.Empty)
                 {
                     var split = GetLoggedInUser().Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
@@ -35,7 +36,7 @@ namespace R3MUS.Devpack.IntelLogger
                 watcher.Changed += new FileSystemEventHandler(CheckLogs);
                 watcher.EnableRaisingEvents = true;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
                 var payload = new MessagePayload()

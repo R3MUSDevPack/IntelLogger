@@ -11,8 +11,11 @@ namespace R3MUS.Devpack.IntelLogger
     {
         static void Main(string[] args)
         {
-            var worker = new Worker();
+            var line = new LogLine("[2015.11.26 00:21:53 ] GoodKenny > basil is there a loaner miner available there ?");
+            Console.Write(line.LogDateTime);
             Console.ReadLine();
+            //var worker = new Worker();
+            //Console.ReadLine();
             //var path = string.Format(@"{0}\EVE\logs\Chatlogs", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
             //var logFileInfo = new DirectoryInfo(path).EnumerateFiles().Where(file =>
             //    file.Name.Contains(Properties.Settings.Default.IntelChannel)

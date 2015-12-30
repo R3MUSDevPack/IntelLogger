@@ -16,18 +16,7 @@ namespace R3MUS.Devpack.IntelLogger
         public LogLine(string line)
         {
             var split = line.Split(new string [] { " ] " }, StringSplitOptions.RemoveEmptyEntries);
-            var dateTimeSplit = split[0].Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-            var dateSplit = dateTimeSplit[1].Split('.');
-            var timeSplit = dateTimeSplit[2].Split(':');
-
-            LogDateTime = new DateTime(
-                Convert.ToInt32(dateSplit[0]), 
-                Convert.ToInt32(dateSplit[1]), 
-                Convert.ToInt32(dateSplit[2]),
-                Convert.ToInt32(timeSplit[0]),
-                Convert.ToInt32(timeSplit[1]),
-                Convert.ToInt32(timeSplit[2])
-                );
+            LogDateTime = Convert.ToDateTime(split[0].TrimStart('['));
             split = split[1].Split(new string[] { " > " }, StringSplitOptions.RemoveEmptyEntries);
             UserName = split[0];
             Message = split[1];
