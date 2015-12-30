@@ -129,13 +129,13 @@ namespace R3MUS.Devpack.IntelLogger
                     }
                 }
             }
-            var take = 1;
-            if (logLinesLength > 0)
-            {
-                take = lines.Count - logLinesLength;
-            }
+            //var take = 1;
+            //if (logLinesLength > 0)
+            //{
+            //    take = lines.Count - logLinesLength;
+            //}
             lines.Reverse();
-            lines = lines.Take(take).ToList();
+            //lines = lines.Take(take).ToList();
             var messages = new List<LogLine>();
             lines.ForEach(line =>
             {
