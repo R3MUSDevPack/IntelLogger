@@ -34,10 +34,28 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:22489/signalr")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://www.r3mus.org/signalr")]
         public string IntelHubURL {
             get {
                 return ((string)(this["IntelHubURL"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://hooks.slack.com/services/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")]
+        public string SlackWebHook {
+            get {
+                return ((string)(this["SlackWebHook"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool Debug {
+            get {
+                return ((bool)(this["Debug"]));
             }
         }
     }
