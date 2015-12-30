@@ -13,12 +13,14 @@ namespace R3MUS.Devpack.IntelLogger
 {
     public class Worker
     {
-        private string path = @"C:\Users\{0}\Documents\EVE\logs\Chatlogs";
+        private string path = @"C:\Users\{0}\Documents\EVE\logs\Chatlogs\";
         private string user = string.Empty;
         private FileSystemWatcher watcher;
         private int logLinesLength = 0;
         private DateTime lastWriteTime = DateTime.Now;
         private bool run = true;
+
+        private System.Timers.Timer timer;
 
         public Worker()
         {
@@ -31,9 +33,15 @@ namespace R3MUS.Devpack.IntelLogger
                     user = split[split.Length - 1];
                 }
                 path = string.Format(path, user);
-                watcher = new FileSystemWatcher(path);
-                watcher.Changed += new FileSystemEventHandler(CheckLogs);
-                watcher.EnableRaisingEvents = true;
+                //watcher = new FileSystemWatcher(path);
+                //watcher.NotifyFilter = NotifyFilters.LastWrite;
+                //watcher.Changed += new FileSystemEventHandler(CheckLogs);
+                //watcher.EnableRaisingEvents = true;
+
+                timer = new System.Timers.Timer();
+                timer.Interval = 20000;
+                timer.Elapsed += new System.Timers.ElapsedEventHandler(CheckLogs);
+                timer.Enabled = true;
             }
             catch(Exception ex)
             {
@@ -83,11 +91,24 @@ namespace R3MUS.Devpack.IntelLogger
 
         private void CheckLogs(object source, FileSystemEventArgs args)
         {
-            if((args.Name.Contains(Properties.Settings.Default.IntelChannel)) && (File.GetLastWriteTime(args.FullPath) > lastWriteTime) && (run))
+            if((args.Name.Contains(Properties.Settings.Default.IntelChannel)) && (File.GetLastWriteTimeUtc(args.FullPath) > lastWriteTime) && (run))
             {
                 run = false;
                 ReadLog(args.FullPath);
                 lastWriteTime = File.GetLastWriteTime(args.FullPath);
+                run = true;
+            }
+        }
+
+        private void CheckLogs(object source, System.Timers.ElapsedEventArgs args)
+        {
+            var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*"));
+            var fileInfo = info.Where(file => file.LastWriteTimeUtc > lastWriteTime).FirstOrDefault();
+            if((fileInfo != null) && (run))
+            {
+                run = false;
+                ReadLog(fileInfo.FullName);
+                lastWriteTime = File.GetLastWriteTime(fileInfo.FullName);
                 run = true;
             }
         }
