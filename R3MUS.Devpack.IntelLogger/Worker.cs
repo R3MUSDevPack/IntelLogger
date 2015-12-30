@@ -38,13 +38,13 @@ namespace R3MUS.Devpack.IntelLogger
 
         private void CheckLogs(object source, FileSystemEventArgs args)
         {
-            var ready = false;
+            //var ready = false;
             if(args.Name.Contains(Properties.Settings.Default.IntelChannel))
             {
-                while(!ready)
-                {
-                    ready = IsFileReady(args.FullPath);
-                }
+                //while(!ready)
+                //{
+                //    ready = IsFileReady(args.FullPath);
+                //}
                 ReadLog(args.FullPath);
             }
         }
@@ -73,7 +73,22 @@ namespace R3MUS.Devpack.IntelLogger
 
         private void ReadLog(string fileName)
         {
-            var lines = File.ReadAllLines(fileName).ToList();
+            //var lines = File.ReadAllLines(fileName).ToList();
+            var lines = new List<string>();
+
+            using (FileStream inputStream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                using (StreamReader reader = new StreamReader(inputStream))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        lines.Add(reader.ReadLine());
+                    }
+                }
+            }
+
+            lines.Reverse();
+            lines = lines.Take(10).ToList();
             var messages = new List<LogLine>();
             lines.ForEach(line =>
             {
@@ -83,7 +98,7 @@ namespace R3MUS.Devpack.IntelLogger
                 }
                 catch (Exception ex) { }
             });
-            messages = messages.OrderByDescending(message => message.LogDateTime).Take(10).ToList();
+            messages.Reverse();
             Poll(messages);
         }
 
