@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNet.SignalR.Client;
+using Quartz;
 using R3MUS.Devpack.Slack;
 using System;
 using System.Collections.Generic;
@@ -11,37 +12,34 @@ using System.Threading.Tasks;
 
 namespace R3MUS.Devpack.IntelLogger
 {
-    public class Worker
+    [DisallowConcurrentExecution]
+    [PersistJobDataAfterExecution]
+    public class Worker : IJob
     {
         private string path = @"C:\Users\{0}\Documents\EVE\logs\Chatlogs\";
         private string user = string.Empty;
-        private FileSystemWatcher watcher;
+
         private int logLinesLength = 0;
-        private DateTime lastWriteTime = DateTime.Now;
+        public DateTime LastWriteTime { get; set; }
         private bool run = true;
-
-        private System.Timers.Timer timer;
-
+        
         public Worker()
         {
-            //Console.WriteLine(1.ToString());
-            //Console.ReadLine();
             try {
                 while (user == string.Empty)
                 {
                     var split = GetLoggedInUser().Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
                     user = split[split.Length - 1];
                 }
-                path = string.Format(path, user);
-                //watcher = new FileSystemWatcher(path);
-                //watcher.NotifyFilter = NotifyFilters.LastWrite;
-                //watcher.Changed += new FileSystemEventHandler(CheckLogs);
-                //watcher.EnableRaisingEvents = true;
-
-                timer = new System.Timers.Timer();
-                timer.Interval = 20000;
-                timer.Elapsed += new System.Timers.ElapsedEventHandler(CheckLogs);
-                timer.Enabled = true;
+                if (Properties.Settings.Default.LastWriteTime != string.Empty)
+                {
+                    LastWriteTime = Convert.ToDateTime(Properties.Settings.Default.LastWriteTime);
+                }
+                else
+                {
+                    LastWriteTime = DateTime.Now;
+                }
+                path = string.Format(path, user);                
             }
             catch(Exception ex)
             {
@@ -66,6 +64,11 @@ namespace R3MUS.Devpack.IntelLogger
             }
         }
 
+        public void Execute(IJobExecutionContext context)
+        {
+            CheckLogs();
+        }
+
         private string GetLoggedInUser()
         {
             ManagementObjectSearcher searcher;
@@ -88,56 +91,23 @@ namespace R3MUS.Devpack.IntelLogger
                 }
             }
         }
-
-        private void CheckLogs(object source, FileSystemEventArgs args)
+        
+        private void CheckLogs()
         {
-            if((args.Name.Contains(Properties.Settings.Default.IntelChannel)) && (File.GetLastWriteTimeUtc(args.FullPath) > lastWriteTime) && (run))
-            {
-                run = false;
-                ReadLog(args.FullPath);
-                lastWriteTime = File.GetLastWriteTime(args.FullPath);
-                run = true;
-            }
-        }
-
-        private void CheckLogs(object source, System.Timers.ElapsedEventArgs args)
-        {
+            Console.WriteLine("Checking Log Files...");
             var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*"));
-            var fileInfo = info.Where(file => file.LastWriteTimeUtc > lastWriteTime).FirstOrDefault();
-            if((fileInfo != null) && (run))
+            var fileInfo = info.OrderByDescending(fInfo => fInfo.CreationTimeUtc).FirstOrDefault();
+            if ((fileInfo != null) && (run))
             {
+                Console.WriteLine(string.Format("Found Log File {0}", fileInfo.Name));
                 run = false;
                 ReadLog(fileInfo.FullName);
-                lastWriteTime = File.GetLastWriteTime(fileInfo.FullName);
                 run = true;
-            }
-        }
-
-        private bool IsFileReady(string fileName)
-        {
-            try
-            {
-                using (FileStream inputStream = File.Open(fileName, FileMode.Open, FileAccess.Read))
-                {
-                    if(inputStream.Length > 0)
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-            }
-            catch(Exception ex)
-            {
-                return false;
             }
         }
 
         private void ReadLog(string fileName)
         {
-            //var lines = File.ReadAllLines(fileName).ToList();
             var lines = new List<string>();
 
             using (FileStream inputStream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
@@ -150,13 +120,7 @@ namespace R3MUS.Devpack.IntelLogger
                     }
                 }
             }
-            //var take = 1;
-            //if (logLinesLength > 0)
-            //{
-            //    take = lines.Count - logLinesLength;
-            //}
             lines.Reverse();
-            //lines = lines.Take(take).ToList();
             var messages = new List<LogLine>();
             lines.ForEach(line =>
             {
@@ -167,8 +131,12 @@ namespace R3MUS.Devpack.IntelLogger
                 catch (Exception ex) { }
             });
             messages.Reverse();
-            Poll(messages);
-            logLinesLength = lines.Count;
+            if (messages.Count > 0)
+            {
+                Poll(messages);
+                LastWriteTime = messages.LastOrDefault().LogDateTime;
+                Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
+            }
         }
 
         private void Poll(List<LogLine> messages)
@@ -176,7 +144,7 @@ namespace R3MUS.Devpack.IntelLogger
             var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
             var hub = hubConnection.CreateHubProxy("IntelHub");
             hubConnection.Start().Wait();
-            messages.Where(message => message.LogDateTime > lastWriteTime).ToList().ForEach(message => {
+            messages.Where(message => message.LogDateTime > LastWriteTime).ToList().ForEach(message => {
                 try
                 {
                     Console.WriteLine(string.Format("{0}: {1} > {2}", message.LogDateTime.ToString("yyyy-MM-dd HH:mm:ss"), message.UserName, message.Message));

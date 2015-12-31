@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Quartz;
+using Quartz.Impl;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -11,16 +13,30 @@ namespace R3MUS.Devpack.IntelLogger
     {
         static void Main(string[] args)
         {
-            var worker = new Worker();
-            Console.ReadLine();
-            //var path = string.Format(@"{0}\EVE\logs\Chatlogs", Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-            //var logFileInfo = new DirectoryInfo(path).EnumerateFiles().Where(file =>
-            //    file.Name.Contains(Properties.Settings.Default.IntelChannel)
-            //    ).OrderBy(file => file.LastWriteTimeUtc).FirstOrDefault();
+            //var worker = new Worker();
 
-            //var fsw = new FileSystemWatcher(path);
-            //fsw.EnableRaisingEvents = true;
-            //fsw.Changed += CheckLogs;
+            Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
+
+            var sched = new StdSchedulerFactory().GetScheduler();
+            sched.Start();
+
+            var jobDetail = JobBuilder.Create(Type.GetType("R3MUS.Devpack.IntelLogger.Worker"))
+                .WithIdentity(string.Format("{0}Instance", "IntelLogCheck"), string.Format("{0}Group", "IntelLogCheck"))
+                .Build();
+            
+            var trigger = TriggerBuilder.Create()
+                .WithIdentity(string.Format("{0}Trigger", "IntelLogCheck"), string.Format("{0}TriggerGroup", "IntelLogCheck"))
+                .StartNow()
+                .WithSimpleSchedule(x => x.WithIntervalInSeconds(10).RepeatForever())
+                .Build();
+
+            sched.ScheduleJob(jobDetail, trigger);
+
+            Console.ReadLine();
+        }
+        static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.LastWriteTime = string.Empty;
         }
     }
 }

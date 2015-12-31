@@ -34,7 +34,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://www.r3mus.org/signalr")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:22489/signalr")]
         public string IntelHubURL {
             get {
                 return ((string)(this["IntelHubURL"]));
@@ -56,6 +56,18 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         public bool Debug {
             get {
                 return ((bool)(this["Debug"]));
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string LastWriteTime {
+            get {
+                return ((string)(this["LastWriteTime"]));
+            }
+            set {
+                this["LastWriteTime"] = value;
             }
         }
     }
