@@ -18,10 +18,12 @@ namespace R3MUS.Devpack.IntelLogger
     {
         private string path = @"C:\Users\{0}\Documents\EVE\logs\Chatlogs\";
         private string user = string.Empty;
-
-        private int logLinesLength = 0;
+        
         public DateTime LastWriteTime { get; set; }
+        public DateTime LastUserPingTime { get; set; }
         private bool run = true;
+
+        public string Logger { get; set; }
         
         public Worker()
         {
@@ -31,6 +33,7 @@ namespace R3MUS.Devpack.IntelLogger
                     var split = GetLoggedInUser().Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
                     user = split[split.Length - 1];
                 }
+                Logger = string.Empty;
                 if (Properties.Settings.Default.LastWriteTime != string.Empty)
                 {
                     LastWriteTime = Convert.ToDateTime(Properties.Settings.Default.LastWriteTime);
@@ -38,6 +41,7 @@ namespace R3MUS.Devpack.IntelLogger
                 else
                 {
                     LastWriteTime = DateTime.Now;
+                    LastUserPingTime = DateTime.MinValue;
                 }
                 path = string.Format(path, user);                
             }
@@ -94,12 +98,18 @@ namespace R3MUS.Devpack.IntelLogger
         
         private void CheckLogs()
         {
-            Console.WriteLine("Checking Log Files...");
-            var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*"));
-            var fileInfo = info.OrderByDescending(fInfo => fInfo.CreationTimeUtc).FirstOrDefault();
+            ClearCurrentConsoleLine();
+            Console.WriteLine(string.Format("{0}: Checking Log Files...", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")));
+            
+            var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
+            info.ForEach(fInfo => fInfo.Refresh());
+
+            var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
             if ((fileInfo != null) && (run))
             {
-                Console.WriteLine(string.Format("Found Log File {0}", fileInfo.Name));
+                ClearCurrentConsoleLine();
+                Console.WriteLine(string.Format("{0}: Found Log File {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), fileInfo.Name));
+                
                 run = false;
                 ReadLog(fileInfo.FullName);
                 run = true;
@@ -120,71 +130,118 @@ namespace R3MUS.Devpack.IntelLogger
                     }
                 }
             }
+
+            if(Logger == string.Empty)
+            {
+                Logger = lines.Where(line => line.Contains("Listener:")).FirstOrDefault().Split(new string[] { ":        " }, StringSplitOptions.RemoveEmptyEntries)[1];
+            }
             lines.Reverse();
+
             var messages = new List<LogLine>();
             lines.ForEach(line =>
             {
-                try
+                if (!line.Contains("MOTD"))
                 {
-                    messages.Add(new LogLine(line));
+                    try
+                    {
+                        messages.Add(new LogLine(line));
+                    }
+                    catch (Exception ex) { }
                 }
-                catch (Exception ex) { }
             });
             messages.Reverse();
-            if (messages.Count > 0)
+            if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
             {
-                Poll(messages);
+                ClearCurrentConsoleLine();
+                Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList());
                 LastWriteTime = messages.LastOrDefault().LogDateTime;
                 Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
+                Console.WriteLine("");
             }
+        }
+        public static void ClearCurrentConsoleLine()
+        {
+            try
+            {
+                int currentLineCursor = Console.CursorTop - 1;
+                Console.SetCursorPosition(0, currentLineCursor);
+                for (int i = 0; i < Console.WindowWidth; i++)
+                {
+                    Console.Write(" ");
+                }
+                Console.SetCursorPosition(0, currentLineCursor);
+            }
+            catch (Exception ex) { }
         }
 
         private void Poll(List<LogLine> messages)
         {
-            var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
-            var hub = hubConnection.CreateHubProxy("IntelHub");
-            hubConnection.Start().Wait();
-            messages.Where(message => message.LogDateTime > LastWriteTime).ToList().ForEach(message => {
-                try
-                {
-                    Console.WriteLine(string.Format("{0}: {1} > {2}", message.LogDateTime.ToString("yyyy-MM-dd HH:mm:ss"), message.UserName, message.Message));
-                    hub.Invoke<LogLine>("reportIntel", message);
-                    Thread.Sleep(500);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
-                    var payload = new MessagePayload()
+            try
+            {
+                var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
+                var hub = hubConnection.CreateHubProxy("IntelHub");
+                hubConnection.Start().Wait();
+
+                ReportUserLogging(hub);
+                
+                messages.ForEach(message => {
+                    try
                     {
-                        Text = "R3MUS Intel Logger Error",
-                        Username = "IntelLoggerBot",
-                        Channel = "it_testing"
-                    };
-                    payload.Attachments.Add(new MessagePayloadAttachment()
+                        Console.WriteLine(string.Format("{0}: {1} > {2}", message.LogDateTime.ToString("yyyy-MM-dd HH:mm:ss"), message.UserName, message.Message));
+                        hub.Invoke<LogLine>("reportIntel", message);
+                        Thread.Sleep(500);
+                    }
+                    catch (Exception ex)
                     {
-                        AuthorName = message.UserName, Title = message.LogDateTime.ToString("yyyy-MM-dd HH:mm:ss"), Text = message.Message,
-                        Colour = "#ff0000"
-                    });
-                    payload.Attachments.Add(new MessagePayloadAttachment()
-                    {
-                        AuthorName = message.UserName,
-                        Title = message.Message,
-                        Text = ex.Message,
-                        Colour = "#ff0000"
-                    });
-                    if(ex.InnerException != null)
-                    {
+                        Console.WriteLine(ex.Message);
+                        var payload = new MessagePayload()
+                        {
+                            Text = "R3MUS Intel Logger Error",
+                            Username = "IntelLoggerBot",
+                            Channel = "it_testing"
+                        };
+                        payload.Attachments.Add(new MessagePayloadAttachment()
+                        {
+                            AuthorName = message.UserName, Title = message.LogDateTime.ToString("yyyy-MM-dd HH:mm:ss"), Text = message.Message,
+                            Colour = "#ff0000"
+                        });
                         payload.Attachments.Add(new MessagePayloadAttachment()
                         {
                             AuthorName = message.UserName,
                             Title = message.Message,
-                            Text = ex.InnerException.Message,
+                            Text = ex.Message,
                             Colour = "#ff0000"
                         });
+                        if (ex.InnerException != null)
+                        {
+                            payload.Attachments.Add(new MessagePayloadAttachment()
+                            {
+                                AuthorName = message.UserName,
+                                Title = message.Message,
+                                Text = ex.InnerException.Message,
+                                Colour = "#ff0000"
+                            });
+                        }
+                        Slack.Plugin.SendToRoom(payload, "it_testing", Properties.Settings.Default.SlackWebHook, "IntelLoggerBot");
                     }
-                    Slack.Plugin.SendToRoom(payload, "it_testing", Properties.Settings.Default.SlackWebHook, "IntelLoggerBot");
+                });
+            }
+            catch(Exception ex) { }
+        }
+
+        private void ReportUserLogging(IHubProxy hub)
+        {
+            try
+            {
+
+            if(LastUserPingTime < DateTime.Now.AddMinutes(-15))
+            {
+                hub.Invoke<string>("imLogging", Logger);
+                LastUserPingTime = DateTime.Now;
                 }
-            });
+            }
+            catch(Exception ex)
+            { }
         }
     }
 }
