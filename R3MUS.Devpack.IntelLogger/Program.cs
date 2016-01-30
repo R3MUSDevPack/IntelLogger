@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -14,6 +15,8 @@ namespace R3MUS.Devpack.IntelLogger
         static void Main(string[] args)
         {
             //var worker = new Worker();
+
+            Console.Title = string.Format("R3MUS Intel Logger - v{0}", Assembly.GetCallingAssembly().GetName().Version.ToString());
 
             Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
 

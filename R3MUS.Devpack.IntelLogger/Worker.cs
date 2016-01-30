@@ -21,7 +21,7 @@ namespace R3MUS.Devpack.IntelLogger
         
         public DateTime LastWriteTime { get; set; }
         public DateTime LastUserPingTime { get; set; }
-        private bool run = true;
+        private bool run = true;        
 
         public string Logger { get; set; }
         
@@ -150,10 +150,17 @@ namespace R3MUS.Devpack.IntelLogger
                 }
             });
             messages.Reverse();
+
+            var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
+            var hub = hubConnection.CreateHubProxy("IntelHub");
+            hubConnection.Start().Wait();
+
+            ReportUserLogging(hub);
+
             if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
             {
                 ClearCurrentConsoleLine();
-                Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList());
+                Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);
                 LastWriteTime = messages.LastOrDefault().LogDateTime;
                 Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
                 Console.WriteLine("");
@@ -174,16 +181,10 @@ namespace R3MUS.Devpack.IntelLogger
             catch (Exception ex) { }
         }
 
-        private void Poll(List<LogLine> messages)
+        private void Poll(List<LogLine> messages, IHubProxy hub)
         {
             try
-            {
-                var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
-                var hub = hubConnection.CreateHubProxy("IntelHub");
-                hubConnection.Start().Wait();
-
-                ReportUserLogging(hub);
-                
+            {                
                 messages.ForEach(message => {
                     try
                     {
@@ -233,11 +234,10 @@ namespace R3MUS.Devpack.IntelLogger
         {
             try
             {
-
-            if(LastUserPingTime < DateTime.Now.AddMinutes(-15))
-            {
-                hub.Invoke<string>("imLogging", Logger);
-                LastUserPingTime = DateTime.Now;
+                if(LastUserPingTime < DateTime.Now.AddMinutes(-15))
+                {
+                    hub.Invoke<string>("imLogging", Logger);
+                    LastUserPingTime = DateTime.Now;
                 }
             }
             catch(Exception ex)

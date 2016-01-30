@@ -43,7 +43,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("https://hooks.slack.com/services/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")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string SlackWebHook {
             get {
                 return ((string)(this["SlackWebHook"]));
