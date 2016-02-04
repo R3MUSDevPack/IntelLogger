@@ -28,10 +28,17 @@ namespace R3MUS.Devpack.IntelLogger
         public Worker()
         {
             try {
-                while (user == string.Empty)
+                try
                 {
-                    var split = GetLoggedInUser().Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
-                    user = split[split.Length - 1];
+                    while (user == string.Empty)
+                    {
+                        var split = GetLoggedInUser().Split(new string[] { "\\" }, StringSplitOptions.RemoveEmptyEntries);
+                        user = split[split.Length - 1];
+                    }
+                }
+                catch(Exception ex)
+                {
+                    user = "Clyde69";
                 }
                 Logger = string.Empty;
                 if (Properties.Settings.Default.LastWriteTime != string.Empty)
