@@ -107,20 +107,41 @@ namespace R3MUS.Devpack.IntelLogger
         {
             ClearCurrentConsoleLine();
             Console.WriteLine(string.Format("{0}: Checking Log Files...", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")));
-            
-            var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
-            info.ForEach(fInfo => fInfo.Refresh());
 
-            var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
-            if ((fileInfo != null) && (run))
-            {
-                ClearCurrentConsoleLine();
-                Console.WriteLine(string.Format("{0}: Found Log File {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), fileInfo.Name));
+            var channels = Properties.Settings.Default.IntelChannels.Cast<string>().ToList();
+            
+            channels.ForEach(channel => {
+                var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(channel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
+                info.ForEach(fInfo => fInfo.Refresh());
+                var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
+                if ((fileInfo != null) && (run))
+                {
+                    ClearCurrentConsoleLine();
+                    Console.WriteLine(string.Format("{0}: Found Log File {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), fileInfo.Name));
+
+                    run = false;
+                    ReadLog(fileInfo.FullName);
+                    run = true;
+                }
+                else
+                {
+                    Console.WriteLine(string.Format("{0}: Failed to find a log file for channel {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), channel));
+                }
+            });
+            
+            //var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
+            //info.ForEach(fInfo => fInfo.Refresh());
+
+            //var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
+            //if ((fileInfo != null) && (run))
+            //{
+            //    ClearCurrentConsoleLine();
+            //    Console.WriteLine(string.Format("{0}: Found Log File {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), fileInfo.Name));
                 
-                run = false;
-                ReadLog(fileInfo.FullName);
-                run = true;
-            }
+            //    run = false;
+            //    ReadLog(fileInfo.FullName);
+            //    run = true;
+            //}
         }
 
         private void ReadLog(string fileName)
@@ -138,7 +159,7 @@ namespace R3MUS.Devpack.IntelLogger
                 }
             }
 
-            if(Logger == string.Empty)
+            if (Logger == string.Empty)
             {
                 Logger = lines.Where(line => line.Contains("Listener:")).FirstOrDefault().Split(new string[] { ":        " }, StringSplitOptions.RemoveEmptyEntries)[1];
             }
