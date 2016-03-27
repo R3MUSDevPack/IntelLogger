@@ -47,7 +47,7 @@ namespace R3MUS.Devpack.IntelLogger
                 }
                 else
                 {
-                    LastWriteTime = DateTime.Now;
+                    LastWriteTime = DateTime.Now.ToUniversalTime();
                     LastUserPingTime = DateTime.MinValue;
                 }
                 path = string.Format(path, user);                
@@ -265,7 +265,7 @@ namespace R3MUS.Devpack.IntelLogger
                 if(LastUserPingTime < DateTime.Now.AddMinutes(-15))
                 {
                     hub.Invoke<string>("imLogging", Logger);
-                    LastUserPingTime = DateTime.Now;
+                    LastUserPingTime = DateTime.Now.ToUniversalTime();
                 }
             }
             catch(Exception ex)
