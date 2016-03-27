@@ -41,11 +41,11 @@ namespace R3MUS.Devpack.IntelLogger
                     user = "Clyde69";
                 }
                 Logger = string.Empty;
-                if (Properties.Settings.Default.LastWriteTime != string.Empty)
+                if ((LastWriteTime == DateTime.MinValue) && (Properties.Settings.Default.LastWriteTime != string.Empty))
                 {
                     LastWriteTime = Convert.ToDateTime(Properties.Settings.Default.LastWriteTime);
                 }
-                else
+                else if(LastWriteTime == DateTime.MinValue)
                 {
                     LastWriteTime = DateTime.Now.ToUniversalTime();
                     LastUserPingTime = DateTime.MinValue;
@@ -185,7 +185,7 @@ namespace R3MUS.Devpack.IntelLogger
 
             ReportUserLogging(hub);
 
-            if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
+            if (messages.Where(message => message.LogDateTime > LastWriteTime.ToUniversalTime()).ToList().Count > 0)
             {
                 ClearCurrentConsoleLine();
                 Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);
@@ -265,7 +265,7 @@ namespace R3MUS.Devpack.IntelLogger
                 if(LastUserPingTime < DateTime.Now.AddMinutes(-15))
                 {
                     hub.Invoke<string>("imLogging", Logger);
-                    LastUserPingTime = DateTime.Now.ToUniversalTime();
+                    LastUserPingTime = DateTime.Now;
                 }
             }
             catch(Exception ex)
