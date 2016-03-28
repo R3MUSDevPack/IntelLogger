@@ -128,20 +128,6 @@ namespace R3MUS.Devpack.IntelLogger
                     Console.WriteLine(string.Format("{0}: Failed to find a log file for channel {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), channel));
                 }
             });
-            
-            //var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(Properties.Settings.Default.IntelChannel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
-            //info.ForEach(fInfo => fInfo.Refresh());
-
-            //var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
-            //if ((fileInfo != null) && (run))
-            //{
-            //    ClearCurrentConsoleLine();
-            //    Console.WriteLine(string.Format("{0}: Found Log File {1}", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"), fileInfo.Name));
-                
-            //    run = false;
-            //    ReadLog(fileInfo.FullName);
-            //    run = true;
-            //}
         }
 
         private void ReadLog(string fileName)
@@ -185,7 +171,7 @@ namespace R3MUS.Devpack.IntelLogger
 
             ReportUserLogging(hub);
 
-            if (messages.Where(message => message.LogDateTime > LastWriteTime.ToUniversalTime()).ToList().Count > 0)
+            if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
             {
                 ClearCurrentConsoleLine();
                 Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);

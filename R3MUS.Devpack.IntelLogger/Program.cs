@@ -41,6 +41,8 @@ namespace R3MUS.Devpack.IntelLogger
                 .WithSimpleSchedule(x => x.WithIntervalInSeconds(10).RepeatForever())
                 .Build();
 
+            Properties.Settings.Default.LastWriteTime = DateTime.Now.ToUniversalTime().ToString();
+
             sched.ScheduleJob(jobDetail, trigger);
 
             Console.ReadLine();
