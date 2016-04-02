@@ -8,6 +8,9 @@ using System.Reflection;
 using System.Text;
 using System.Deployment;
 using System.Deployment.Application;
+using Microsoft.Win32;
+using System.Diagnostics;
+using R3MUS.Devpack.Slack;
 
 namespace R3MUS.Devpack.IntelLogger
 {
@@ -15,8 +18,6 @@ namespace R3MUS.Devpack.IntelLogger
     {
         static void Main(string[] args)
         {
-            //var worker = new Worker();
-
             if(ApplicationDeployment.IsNetworkDeployed)
             {
                 Console.Title = string.Format("R3MUS Intel Logger - v{0}", ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString());
@@ -50,6 +51,6 @@ namespace R3MUS.Devpack.IntelLogger
         static void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
             Properties.Settings.Default.LastWriteTime = string.Empty;
-        }
+        }        
     }
 }
