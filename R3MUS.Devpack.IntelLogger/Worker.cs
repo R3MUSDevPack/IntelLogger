@@ -165,19 +165,22 @@ namespace R3MUS.Devpack.IntelLogger
             });
             messages.Reverse();
 
-            var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
-            var hub = hubConnection.CreateHubProxy("IntelHub");
-            hubConnection.Start().Wait();
-
-            ReportUserLogging(hub);
-
-            if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
+            using (var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL))
             {
-                ClearCurrentConsoleLine();
-                Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);
-                LastWriteTime = messages.LastOrDefault().LogDateTime;
-                Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
-                Console.WriteLine("");
+                var hub = hubConnection.CreateHubProxy("IntelHub");
+                hubConnection.Start().Wait();
+
+                ReportUserLogging(hub);
+
+                if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
+                {
+                    ClearCurrentConsoleLine();
+                    Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);
+                    LastWriteTime = messages.LastOrDefault().LogDateTime;
+                    Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
+                    Console.WriteLine("");
+                }
+                hubConnection.Stop();
             }
         }
         public static void ClearCurrentConsoleLine()
