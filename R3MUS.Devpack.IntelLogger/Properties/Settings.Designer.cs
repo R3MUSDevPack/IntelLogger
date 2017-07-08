@@ -46,7 +46,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://www.r3mus.org/signalr")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string IntelHubURL {
             get {
                 return ((string)(this["IntelHubURL"]));
@@ -69,6 +69,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
   <string>GOTG_Intel</string>
   <string>R3MUS_DeployTel</string>
   <string>Deployment_Intel</string>
+  <string>Militia</string>
 </ArrayOfString>")]
         public global::System.Collections.Specialized.StringCollection IntelChannels {
             get {
