@@ -15,8 +15,10 @@ using R3MUS.Devpack.Slack;
 namespace R3MUS.Devpack.IntelLogger
 {
     class Program
-    {
-        static void Main(string[] args)
+				{
+								private static string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"\EVE\logs\Chatlogs\");
+
+								static void Main(string[] args)
         {
             if(ApplicationDeployment.IsNetworkDeployed)
             {
@@ -27,7 +29,18 @@ namespace R3MUS.Devpack.IntelLogger
                 Console.Title = string.Format("R3MUS Intel Logger - v{0}", Assembly.GetCallingAssembly().GetName().Version.ToString());
             }
 
-            Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
+												if (!Directory.Exists(path) && Directory.Exists(Properties.Settings.Default.LogFolder))
+												{
+																path = Properties.Settings.Default.LogFolder;
+												}
+												if(!Directory.Exists(path))
+												{
+																Console.WriteLine(string.Concat("Cannot find any log file folder. Please set the 'LogFolder' setting in ", Directory.GetCurrentDirectory(), @"\R3MUS.Devpack.IntelLogger.exe.config to the correct location & rerun the logger."));
+																Console.ReadLine();
+																return;
+												}
+
+												Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
 
             var sched = new StdSchedulerFactory().GetScheduler();
             sched.Start();

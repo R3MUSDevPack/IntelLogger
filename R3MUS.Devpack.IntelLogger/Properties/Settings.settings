@@ -23,7 +23,7 @@
   &lt;string&gt;Militia&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
-    <Setting Name="LogFolder" Type="System.String" Scope="User">
+    <Setting Name="LogFolder" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Replace this with the location of your channel logs</Value>
     </Setting>
   </Settings>

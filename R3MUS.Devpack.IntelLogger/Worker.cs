@@ -108,7 +108,7 @@ namespace R3MUS.Devpack.IntelLogger
             ClearCurrentConsoleLine();
             Console.WriteLine(string.Format("{0}: Checking Log Files...", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")));
 
-            if (System.IO.Directory.Exists(Properties.Settings.Default.LogFolder))
+            if (! Directory.Exists(path) && Directory.Exists(Properties.Settings.Default.LogFolder))
             {
                 path = Properties.Settings.Default.LogFolder;
             }
