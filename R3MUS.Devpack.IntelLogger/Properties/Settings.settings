@@ -21,6 +21,7 @@
   &lt;string&gt;R3MUS_DeployTel&lt;/string&gt;
   &lt;string&gt;GOTG_DeployTel&lt;/string&gt;
   &lt;string&gt;Deployment_Intel&lt;/string&gt;
+  &lt;string&gt;DUNKIN DONUTS INTEL&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
     <Setting Name="LogFolder" Type="System.String" Scope="Application">
