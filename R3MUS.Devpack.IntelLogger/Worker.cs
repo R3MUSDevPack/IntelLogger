@@ -38,7 +38,7 @@ namespace R3MUS.Devpack.IntelLogger
                 }
                 catch(Exception ex)
                 {
-                    user = "Clyde69";
+                    user = Properties.Settings.Default.BroadcastGroup;
                 }
                 Logger = string.Empty;
                 if ((LastWriteTime == DateTime.MinValue) && (Properties.Settings.Default.LastWriteTime != string.Empty))
@@ -168,23 +168,14 @@ namespace R3MUS.Devpack.IntelLogger
                 }
             });
             messages.Reverse();
-
-            using (var hubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL))
+            ReportUserLogging(Program.HubProxy);
+            if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
             {
-                var hub = hubConnection.CreateHubProxy("IntelHub");
-                hubConnection.Start().Wait();
-
-                ReportUserLogging(hub);
-
-                if (messages.Where(message => message.LogDateTime > LastWriteTime).ToList().Count > 0)
-                {
-                    ClearCurrentConsoleLine();
-                    Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), hub);
-                    LastWriteTime = messages.LastOrDefault().LogDateTime;
-                    Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
-                    Console.WriteLine("");
-                }
-                hubConnection.Stop();
+                ClearCurrentConsoleLine();
+                Poll(messages.Where(message => message.LogDateTime > LastWriteTime).ToList(), Program.HubProxy);
+                LastWriteTime = messages.LastOrDefault().LogDateTime;
+                Properties.Settings.Default.LastWriteTime = LastWriteTime.ToString();
+                Console.WriteLine("");
             }
         }
         public static void ClearCurrentConsoleLine()

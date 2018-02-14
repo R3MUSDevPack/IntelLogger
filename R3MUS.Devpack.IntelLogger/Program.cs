@@ -11,6 +11,8 @@ using System.Deployment.Application;
 using Microsoft.Win32;
 using System.Diagnostics;
 using R3MUS.Devpack.Slack;
+using System.Windows.Forms;
+using Microsoft.AspNet.SignalR.Client;
 
 namespace R3MUS.Devpack.IntelLogger
 {
@@ -18,6 +20,10 @@ namespace R3MUS.Devpack.IntelLogger
 	{
 		private static string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"\EVE\logs\Chatlogs\");
 
+        public static HubConnection HubConnection { get; set; }
+        public static IHubProxy HubProxy { get; set; }
+
+        [STAThread]
 		static void Main(string[] args)
         {
             if(ApplicationDeployment.IsNetworkDeployed)
@@ -33,22 +39,35 @@ namespace R3MUS.Devpack.IntelLogger
 			{
 				path = Properties.Settings.Default.LogFolder;
 			}
-			if(!Directory.Exists(path))
+			while(!Directory.Exists(path))
 			{
-				Console.WriteLine(string.Concat("Cannot find any log file folder. Please set the 'LogFolder' setting in ", Directory.GetCurrentDirectory(), @"\R3MUS.Devpack.IntelLogger.exe.config to the correct location & rerun the logger."));
-				Console.ReadLine();
-				return;
+                path = GetLogFolder();
+                Properties.Settings.Default.LogFolder = path;
+                Properties.Settings.Default.Save();
 			}
 
 			Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
+            StartSignalR();
+            SetupCronJob();
 
+            Console.ReadLine();
+        }
+        static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+        {
+            HubConnection.Stop();
+            HubConnection.Dispose();
+            Properties.Settings.Default.LastWriteTime = string.Empty;
+        }
+
+        static void SetupCronJob()
+        {
             var sched = new StdSchedulerFactory().GetScheduler();
             sched.Start();
 
             var jobDetail = JobBuilder.Create(Type.GetType("R3MUS.Devpack.IntelLogger.Worker"))
                 .WithIdentity(string.Format("{0}Instance", "IntelLogCheck"), string.Format("{0}Group", "IntelLogCheck"))
                 .Build();
-            
+
             var trigger = TriggerBuilder.Create()
                 .WithIdentity(string.Format("{0}Trigger", "IntelLogCheck"), string.Format("{0}TriggerGroup", "IntelLogCheck"))
                 .StartNow()
@@ -58,12 +77,36 @@ namespace R3MUS.Devpack.IntelLogger
             Properties.Settings.Default.LastWriteTime = DateTime.Now.ToUniversalTime().ToString();
 
             sched.ScheduleJob(jobDetail, trigger);
-
-            Console.ReadLine();
         }
-        static void CurrentDomain_ProcessExit(object sender, EventArgs e)
+
+        static string GetLogFolder()
         {
-            Properties.Settings.Default.LastWriteTime = string.Empty;
-        }        
+            var dialog = new FolderBrowserDialog();
+            dialog.Description = "Your log folder appears to be in a non-standard location. Please provide the folder location to proceed.";
+            if(dialog.ShowDialog() == DialogResult.OK)
+            {
+                return dialog.SelectedPath;
+            }
+            else
+            {
+                Console.WriteLine("Unable to continue at this time...");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+            return string.Empty;
+        }
+
+        static void StartSignalR()
+        {
+            HubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
+            HubProxy = HubConnection.CreateHubProxy("IntelHub");
+            HubConnection.Start().Wait();
+            try
+            {
+                //  Not implemented anywhere serverside right now
+                HubProxy.Invoke("joinGroup", Properties.Settings.Default.BroadcastGroup);
+            }
+            catch { }
+        }
     }
 }

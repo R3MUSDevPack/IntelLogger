@@ -78,12 +78,24 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
             }
         }
         
-        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("Replace this with the location of your channel logs")]
         public string LogFolder {
             get {
                 return ((string)(this["LogFolder"]));
+            }
+            set {
+                this["LogFolder"] = value;
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string BroadcastGroup {
+            get {
+                return ((string)(this["BroadcastGroup"]));
             }
         }
     }

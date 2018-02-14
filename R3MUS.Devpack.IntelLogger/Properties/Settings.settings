@@ -24,8 +24,11 @@
   &lt;string&gt;DUNKIN DONUTS INTEL&lt;/string&gt;
 &lt;/ArrayOfString&gt;</Value>
     </Setting>
-    <Setting Name="LogFolder" Type="System.String" Scope="Application">
+    <Setting Name="LogFolder" Type="System.String" Scope="User">
       <Value Profile="(Default)">Replace this with the location of your channel logs</Value>
+    </Setting>
+    <Setting Name="BroadcastGroup" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>
