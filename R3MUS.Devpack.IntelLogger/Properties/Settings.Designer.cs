@@ -46,7 +46,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:12958/signalr")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string IntelHubURL {
             get {
                 return ((string)(this["IntelHubURL"]));

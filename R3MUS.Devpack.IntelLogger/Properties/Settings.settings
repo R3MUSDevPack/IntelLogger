@@ -9,7 +9,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="IntelHubURL" Type="System.String" Scope="Application">
-      <Value Profile="(Default)">http://localhost:12958/signalr</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="SlackWebHook" Type="System.String" Scope="Application">
       <Value Profile="(Default)">https://hooks.slack.com/services/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</Value>
