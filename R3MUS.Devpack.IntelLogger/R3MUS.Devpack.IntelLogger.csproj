@@ -26,7 +26,7 @@
     <InstallUrl>http://downloads.r3mus.org/IntelLogger/</InstallUrl>
     <WebPage>publish.htm</WebPage>
     <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
-    <ApplicationRevision>51</ApplicationRevision>
+    <ApplicationRevision>52</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
@@ -54,7 +54,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>77A06FB5025E4E750D6F81B5004E9B4B74E43A36</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>99782409F490DC04D5064F2916A4DA2A8185813A</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestKeyFile>R3MUS.Devpack.IntelLogger_TemporaryKey.pfx</ManifestKeyFile>

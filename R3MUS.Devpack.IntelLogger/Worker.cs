@@ -16,7 +16,6 @@ namespace R3MUS.Devpack.IntelLogger
     [PersistJobDataAfterExecution]
     public class Worker : IJob
     {
-        private string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"\EVE\logs\Chatlogs\");
         private string user = string.Empty;
         
         public DateTime LastWriteTime { get; set; }
@@ -49,8 +48,7 @@ namespace R3MUS.Devpack.IntelLogger
                 {
                     LastWriteTime = DateTime.Now.ToUniversalTime();
                     LastUserPingTime = DateTime.MinValue;
-                }
-                path = string.Format(path, user);                
+                }             
             }
             catch(Exception ex)
             {
@@ -107,15 +105,11 @@ namespace R3MUS.Devpack.IntelLogger
         {
             ClearCurrentConsoleLine();
             Console.WriteLine(string.Format("{0}: Checking Log Files...", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")));
-
-            if (! Directory.Exists(path) && Directory.Exists(Properties.Settings.Default.LogFolder))
-            {
-                path = Properties.Settings.Default.LogFolder;
-            }
+            
             var channels = Properties.Settings.Default.IntelChannels.Cast<string>().ToList();
             
             channels.ForEach(channel => {
-                var info = new DirectoryInfo(path).EnumerateFiles(string.Concat(channel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
+                var info = new DirectoryInfo(Program.Path).EnumerateFiles(string.Concat(channel, "*")).OrderByDescending(fInfo => fInfo.CreationTimeUtc).Take(6).ToList();
                 info.ForEach(fInfo => fInfo.Refresh());
                 var fileInfo = info.OrderByDescending(fInfo => fInfo.LastWriteTimeUtc).FirstOrDefault();
                 if ((fileInfo != null) && (run))

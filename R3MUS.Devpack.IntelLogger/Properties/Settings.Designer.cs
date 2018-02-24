@@ -46,7 +46,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("http://localhost:12958/signalr")]
         public string IntelHubURL {
             get {
                 return ((string)(this["IntelHubURL"]));
@@ -55,7 +55,7 @@ namespace R3MUS.Devpack.IntelLogger.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        [global::System.Configuration.DefaultSettingValueAttribute("https://hooks.slack.com/services/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")]
         public string SlackWebHook {
             get {
                 return ((string)(this["SlackWebHook"]));

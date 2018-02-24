@@ -18,7 +18,7 @@ namespace R3MUS.Devpack.IntelLogger
 {
     class Program
 	{
-		private static string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"\EVE\logs\Chatlogs\");
+		public static string Path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), @"\EVE\logs\Chatlogs\");
 
         public static HubConnection HubConnection { get; set; }
         public static IHubProxy HubProxy { get; set; }
@@ -35,16 +35,18 @@ namespace R3MUS.Devpack.IntelLogger
                 Console.Title = string.Format("R3MUS Intel Logger - v{0}", Assembly.GetCallingAssembly().GetName().Version.ToString());
             }
 
-			if (!Directory.Exists(path) && Directory.Exists(Properties.Settings.Default.LogFolder))
+			if (!Directory.Exists(Path) && Directory.Exists(Properties.Settings.Default.LogFolder))
 			{
-				path = Properties.Settings.Default.LogFolder;
+                Path = Properties.Settings.Default.LogFolder;
 			}
-			while(!Directory.Exists(path))
+			while(!Directory.Exists(Path))
 			{
-                path = GetLogFolder();
-                Properties.Settings.Default.LogFolder = path;
+                Path = GetLogFolder();
+                Properties.Settings.Default.LogFolder = Path;
                 Properties.Settings.Default.Save();
 			}
+            Console.WriteLine(string.Concat("Log file folder path set to ", Path));
+            Console.WriteLine();
 
 			Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
             StartSignalR();
@@ -104,7 +106,7 @@ namespace R3MUS.Devpack.IntelLogger
             try
             {
                 //  Not implemented anywhere serverside right now
-                HubProxy.Invoke("joinGroup", Properties.Settings.Default.BroadcastGroup);
+                //HubProxy.Invoke("joinGroup", Properties.Settings.Default.BroadcastGroup);
             }
             catch { }
         }
