@@ -1,18 +1,19 @@
-﻿using Quartz;
+﻿using Microsoft.AspNet.SignalR.Client;
+using Quartz;
 using Quartz.Impl;
+using R3MUS.Devpack.ESI.Models.Character;
+using R3MUS.Devpack.IntelLogger;
+using R3MUS.Devpack.IntelLogger.Helpers;
+using R3MUS.Devpack.IntelLogger.Models;
+using R3MUS.Devpack.IntelLogger.Properties;
 using System;
 using System.Collections.Generic;
+using System.Deployment.Application;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Deployment;
-using System.Deployment.Application;
-using Microsoft.Win32;
-using System.Diagnostics;
-using R3MUS.Devpack.Slack;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using Microsoft.AspNet.SignalR.Client;
 
 namespace R3MUS.Devpack.IntelLogger
 {
@@ -22,6 +23,9 @@ namespace R3MUS.Devpack.IntelLogger
 
         public static HubConnection HubConnection { get; set; }
         public static IHubProxy HubProxy { get; set; }
+        public static Dictionary<string, DateTime> ReadFromTimes { get; set; }
+        public static List<R3MUS.Devpack.SSO.IntelMap.Models.GroupChannelName> LogFileNames { get; set; }
+        public static Dictionary<string, Detail> LoggingCharacters { get; set; }
 
         [STAThread]
 		static void Main(string[] args)
@@ -42,13 +46,17 @@ namespace R3MUS.Devpack.IntelLogger
 			while(!Directory.Exists(Path))
 			{
                 Path = GetLogFolder();
-                Properties.Settings.Default.LogFolder = Path;
-                Properties.Settings.Default.Save();
+                Settings.Default.LogFolder = Path;
+                Settings.Default.Save();
 			}
             Console.WriteLine(string.Concat("Log file folder path set to ", Path));
             Console.WriteLine();
 
-			Properties.Settings.Default.LastWriteTime = DateTime.Now.ToString();
+            LoggingCharacters = new Dictionary<string, Detail>();
+            ReadFromTimes = new Dictionary<string, DateTime>();
+            LogFileNames = new List<SSO.IntelMap.Models.GroupChannelName>();
+
+            Settings.Default.LastWriteTime = DateTime.Now.ToString();
             StartSignalR();
             SetupCronJob();
 
@@ -56,9 +64,13 @@ namespace R3MUS.Devpack.IntelLogger
         }
         static void CurrentDomain_ProcessExit(object sender, EventArgs e)
         {
+            HubProxy.Invoke("leaveGroups", new object[1]
+            {
+                LogFileNames.Select(s => s.Group)
+            });
             HubConnection.Stop();
             HubConnection.Dispose();
-            Properties.Settings.Default.LastWriteTime = string.Empty;
+            Settings.Default.LastWriteTime = string.Empty;
         }
 
         static void SetupCronJob()
@@ -98,17 +110,82 @@ namespace R3MUS.Devpack.IntelLogger
             return string.Empty;
         }
 
-        static void StartSignalR()
+        public static Detail GetLoggingToon(string name)
         {
-            HubConnection = new HubConnection(Properties.Settings.Default.IntelHubURL);
-            HubProxy = HubConnection.CreateHubProxy("IntelHub");
-            HubConnection.Start().Wait();
+            if (!LoggingCharacters.ContainsKey(name))
+            {
+                var detail = new Detail();
+                detail.LoadCharacterByName(name);
+                LoggingCharacters.Add(name, detail);
+            }
+            return LoggingCharacters[name];
+        }
+
+        public static void StartSignalR()
+        {
             try
             {
-                //  Not implemented anywhere serverside right now
-                //HubProxy.Invoke("joinGroup", Properties.Settings.Default.BroadcastGroup);
+                HubConnection = new HubConnection(Settings.Default.IntelHubURL);
+                HubProxy = HubConnection.CreateHubProxy("IntelHub");
+                HubProxyExtensions.On<IEnumerable<SSO.IntelMap.Models.GroupChannelName>>(HubProxy, "sendLogFileNames", data => 
+                    GetLogFileNames(data.ToList()));
+                HubConnection.Start().Wait();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+        }
+        public static void GetLogFileNames(List<SSO.IntelMap.Models.GroupChannelName> data)
+        {
+            var catcher = new List<SSO.IntelMap.Models.GroupChannelName>();
+            var dInfo = new DirectoryInfo(Path);
+            data.ForEach(group =>
+            {
+                group.Channels.ForEach(channel =>
+                {
+                    var fileInfo = dInfo.EnumerateFiles(string.Concat(channel, "*"))
+                        .OrderByDescending(o => o.LastWriteTimeUtc).FirstOrDefault();
+
+                    if (fileInfo != null)
+                    {
+                        var flag1 = false;
+
+                        Console.WriteLine("Listening to channel " + channel);
+                        catcher.Add(group);
+                        LogFileModel model = LogFileHelper.ParseLogFile(fileInfo.FullName, group.Group);
+                        DateTime createdAt = model.CreatedAt;
+
+                        if (model.LogLines.Count > 0)
+                        {
+                            createdAt = Enumerable.Last<LogLine>(model.LogLines).LogDateTime;
+                        }
+                        if (!ReadFromTimes.ContainsKey(group.Group))
+                        {
+                            flag1 = false;
+                        }
+                        else
+                        {
+                            flag1 = ReadFromTimes.FirstOrDefault().Value < createdAt;
+                        }
+                        if (flag1)
+                        {
+                            ReadFromTimes.Remove(group.Group);
+                        }
+                        if (!ReadFromTimes.ContainsKey(group.Group))
+                        {
+                            ReadFromTimes.Add(group.Group, createdAt);
+                        }
+                    }
+                });
+            });
+
+            catcher = catcher.Distinct().ToList();
+            catcher.ForEach(group => {
+                HubProxy.Invoke("joinGroup", group.Group);
+            });
+            Console.WriteLine();
+            LogFileNames = catcher;
         }
     }
 }
